@@ -1,12 +1,10 @@
 import { Router } from "express";
 import scripts from "./scripts.js";
-import uolDb from "../database/index.js";
+import actions from "../database/index.js";
 import validateMessage from "../models/message.js";
 import 'dotenv/config';
 
 const router = Router();
-let db = uolDb;
-const MESSAGE_COLLECTION = process.env.MONGO_DATA_COLLECTION;
 
 // DEV
 router.get('/health', (req, res) => {
@@ -14,11 +12,18 @@ router.get('/health', (req, res) => {
 });
 // DEV
 
-router.post('/messages', (req, res) => {
+router.post('/messages', async(req, res) => {
     const messageContent = req.body;
-    const messageHeader = req.header('User');
-    if(validateMessage(messageContent)) {
-        db.collection(MESSAGE_COLLECTION).insertOne({})
+    const messageHeader = req.header('User').toString('utf-8');
+    if(await validateMessage(messageContent)) {
+        const { addTimeStamp } = scripts;
+        const { insertMessage } = actions;
+        const fullMessage = addTimeStamp(messageContent);
+
+        fullMessage.from = messageHeader;
+
+        insertMessage(fullMessage);
+
         res.status(201).send();
         return;
     }

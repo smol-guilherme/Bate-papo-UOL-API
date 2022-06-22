@@ -1,3 +1,4 @@
+import dayjs from "dayjs";
 
 const messages = [{
 	to: "Maria",
@@ -22,34 +23,15 @@ function fillArrayUpToLimit(limit, user) {
 	return output;
 }
 
-function isEmpty(item) {
-	if (item.length === 0) {
-		return true;
-	}
-	return false;
+function addTimeStamp(content) {
+	const timeStamp = dayjs().format('HH:mm:ss')
+	const output = {...content, time: timeStamp}
+	return output;
 }
-
-function isInvalidField(item) {
-	if (item === "message" || item === "private_messge") {
-		return true;
-	}
-	return false;
-}
-
-// function validMessageFormat(content, header) {
-// 	const { to, text, type } = content;
-// 	const { from } = header;
-// 	if (isEmpty(to) || isEmpty(text)) {
-// 		return false;
-// 	}
-// 	if (isInvalidField(type)) {
-// 		return false;
-// 	}
-// 	return true;
-// }
 
 const scripts = {
 	fillArrayUpToLimit,
+	addTimeStamp
 };
 
 export default scripts;

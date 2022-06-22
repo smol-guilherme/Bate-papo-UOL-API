@@ -14,19 +14,11 @@ const messageSchema = Joi.object({
         .required()
 })
 
-// const test = {
-// 	to: "Maria",
-// 	text: "oi sumida rs",
-// 	type: "private_essage"
-// };
-
 export default async function validateMessage(data) {
     try {
         const response = await messageSchema.validateAsync(data);
-        console.log("this response", response)
         return true;
     } catch(err) {
-        console.log("this err", err);
         return false;
     }
 }
