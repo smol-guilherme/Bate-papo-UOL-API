@@ -1,13 +1,19 @@
 import { Router } from "express";
 import scripts from "./scripts.js";
+import uolDb from "../database/index.js";
 
 const router = Router();
+let db = uolDb;
 
+
+// DEV
 router.get('/health', (req, res) => {
     res.send('OK');
 });
+// DEV
 
 router.get('/participants', (req, res) => {
+    const { participants } = scripts
     res.status(200).send(participants);
 });
 

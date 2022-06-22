@@ -13,17 +13,18 @@ function fillArrayUpToLimit(limit, user) {
         let i = 0;
         while(i !== exitValue) {
             if(messages[i].to === user) {
-                output.push(messages[i])
+                output.push(messages[i]);
                 i++;
             }
         }
         return output;
     }
-    const output = messages.filter((msg) => msg.to === user);
+    const output = messages.filter((msg) => msg.to === user || msg.to === "Todos");
     return output;
 }
 
 const scripts = {
+    participants,
     fillArrayUpToLimit
 };
 
