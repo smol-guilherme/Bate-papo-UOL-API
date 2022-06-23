@@ -30,13 +30,24 @@ router.post('/participants', async(req, res) => {
 
 router.post('/messages', async(req, res) => {
     const messageContent = req.body;
-    const messageHeader = req.header('User').toString('utf-8');
+    const targetUser = { name: req.header('User').toString('utf-8') }
+    const { getUser } = actions;
+    if(!(await validateUser(targetUser))) {
+        console.log('entered validate...')
+        res.status(422).send("Formato de usuário inválido");
+        return;
+    }
+    if(await getUser(targetUser) === null) {
+        console.log('entered get...')
+        res.status(422).send("Usuário não encontrado");
+        return;
+    }
     if(await validateMessage(messageContent)) {
         const { addTimeStamp } = scripts;
         const { insertMessage } = actions;
         const fullMessage = addTimeStamp(messageContent);
 
-        fullMessage.from = messageHeader;
+        fullMessage.from = targetUser.name;
 
         insertMessage(fullMessage);
 

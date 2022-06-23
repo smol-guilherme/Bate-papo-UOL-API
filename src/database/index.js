@@ -27,7 +27,7 @@ async function insertUser(user) {
 
 async function insertWelcomeMessage(data) {
     const message = {
-        name: data.name,
+        from: data.name,
         to: "Todos",
         text: "entra na sala...",
         type: "status",
@@ -43,6 +43,7 @@ async function getUser(user) {
 
 const actions = {
     insertMessage,
-    insertUser
+    insertUser,
+    getUser
 }
 export default actions;
