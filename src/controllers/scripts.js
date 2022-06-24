@@ -1,25 +1,17 @@
 import dayjs from "dayjs";
 
-const messages = [{
-	to: "Maria",
-	text: "oi sumida rs",
-	type: "private_message"
-}];
-
-function fillArrayUpToLimit(limit, user) {
+function fillArrayUpToLimit(data, limit = undefined) {
 	if (limit !== undefined) {
 		const output = [];
-		const exitValue = messages.length > limit ? limit : messages.length;
+		const exitValue = data.length > limit ? limit : data.length;
 		let i = 0;
-		while (i !== exitValue) {
-			if (messages[i].to === user) {
-				output.push(messages[i]);
-				i++;
-			}
+		while (output.length < exitValue) {
+			output.push(data[i]);
+			i++;
 		}
 		return output;
 	}
-	const output = messages.filter((msg) => msg.to === user || msg.to === "Todos");
+	const output = data.map(message => message);
 	return output;
 }
 

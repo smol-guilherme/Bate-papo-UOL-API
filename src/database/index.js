@@ -1,4 +1,5 @@
 import { MongoClient } from "mongodb";
+import scripts from "../controllers/scripts.js";
 import dayjs from "dayjs";
 import 'dotenv/config';
 
@@ -13,12 +14,15 @@ let uolDb;
 
 client.connect().then(() => { uolDb = client.db("UOL_API_DB")});
 
-function insertMessage(data) {
-    uolDb.collection(MESSAGE_COLLECTION).insertOne(data);
+async function insertMessage(data) {
+    const { addTimeStamp } = scripts;
+    const fullMessage = addTimeStamp(data);
+    fullMessage.from = targetUser.name;
+    await uolDb.collection(MESSAGE_COLLECTION).insertOne(fullMessage);
 }
 
 async function insertUser(user) {
-    if(await getUser(user) === null) {
+    if(await getUsers(user) === null) {
         const data = {...user, lastStatus: Date.now()};
         await uolDb.collection(USER_COLLECTION).insertOne(data);
         await insertSystemMessage(data, true);
@@ -39,7 +43,17 @@ async function insertSystemMessage(data, flag) {
     await uolDb.collection(MESSAGE_COLLECTION).insertOne(message);
 }
 
-async function getUser(user) {
+async function getMessages(user, limit) {
+    const { fillArrayUpToLimit } = scripts;
+    const messages = await uolDb.collection(MESSAGE_COLLECTION).find({ $or: [{ to: user.name }, { to: "Todos" }] }).toArray();
+    const chatMessages = fillArrayUpToLimit(messages, limit)
+    return chatMessages;
+}
+
+async function getUsers(user = undefined) {
+    if(user === undefined) {
+        return await uolDb.collection(USER_COLLECTION).find({}).toArray();
+    }
     const response = await uolDb.collection(USER_COLLECTION).findOne({ name: user.name });
     return response;
 }
@@ -68,9 +82,10 @@ async function checkForInactives() {
 
 const actions = {
     checkForInactives,
-    insertMessage,
-    insertUser,
     updateStatus,
-    getUser
+    insertMessage,
+    getMessages,
+    insertUser,
+    getUsers
 }
 export default actions;
