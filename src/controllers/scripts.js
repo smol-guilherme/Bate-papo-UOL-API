@@ -1,29 +1,30 @@
+import { stripHtml } from "string-strip-html";
 import dayjs from "dayjs";
 
-function fillArrayUpToLimit(data, limit = undefined) {
-	if (limit !== undefined) {
-		const output = [];
-		const exitValue = data.length > limit ? limit : data.length;
-		let i = 0;
-		while (output.length < exitValue) {
-			output.push(data[i]);
-			i++;
-		}
-		return output;
-	}
-	const output = data.map(message => message);
+const A_MILLISECOND = 1000;
+
+function addTimeStamp(content) {
+	const timeStamp = dayjs().format('HH:mm:ss');
+	const output = {...content, time: timeStamp};
 	return output;
 }
 
-function addTimeStamp(content) {
-	const timeStamp = dayjs().format('HH:mm:ss')
-	const output = {...content, time: timeStamp}
+function timeNowMinusTen() {
+    return (Date.now() - 10*A_MILLISECOND);
+}
+
+function sanitizeData(data) {
+	const output = { ...data };
+	for(let param in data) {
+		output[param] = (stripHtml(data[param]).result).trim();
+	}
 	return output;
 }
 
 const scripts = {
-	fillArrayUpToLimit,
-	addTimeStamp
+	timeNowMinusTen,
+	addTimeStamp,
+	sanitizeData
 };
 
 export default scripts;

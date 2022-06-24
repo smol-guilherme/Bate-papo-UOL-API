@@ -9,8 +9,8 @@ const { checkForInactives, updateStatus } = actions;
 const A_SECOND = 1000;
 const pId = setInterval(checkForInactives, 15*A_SECOND); 
 // DEV
-const alwaysOnlineAdemir = setInterval(() => updateStatus({ name: "Ademir" }), 8*A_SECOND);
-const alwaysOnlineGovt = setInterval(() => updateStatus({ name: "Govt" }), 8*A_SECOND);
+const alwaysOnlineAdemir = setInterval(() => updateStatus({ name: "Ademir" }), 0.33*A_SECOND);
+const alwaysOnlineGovt = setInterval(() => updateStatus({ name: "Govt" }), 0.33*A_SECOND);
 
 router.get('/health', (req, res) => {
     res.send('OK');
