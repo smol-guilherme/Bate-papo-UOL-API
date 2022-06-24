@@ -16,9 +16,10 @@ const messageSchema = Joi.object({
 
 export default async function validateMessage(data) {
     try {
-        const response = await messageSchema.validateAsync(data);
+        const response = await messageSchema.validateAsync(data, { abortEarly: false });
         return true;
     } catch(err) {
+        console.log(`error: ${err}`)
         return false;
     }
 }
