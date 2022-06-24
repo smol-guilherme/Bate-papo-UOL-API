@@ -9,7 +9,8 @@ const { checkForInactives, updateStatus } = actions;
 const A_SECOND = 1000;
 const pId = setInterval(checkForInactives, 15*A_SECOND); 
 // DEV
-const alwaysOnlineAdemir = setInterval(() => updateStatus({ name: "Ademir" }), 9*A_SECOND);
+const alwaysOnlineAdemir = setInterval(() => updateStatus({ name: "Ademir" }), 8*A_SECOND);
+const alwaysOnlineGovt = setInterval(() => updateStatus({ name: "Govt" }), 8*A_SECOND);
 
 router.get('/health', (req, res) => {
     res.send('OK');
@@ -33,21 +34,21 @@ router.post('/participants', async(req, res) => {
 
 router.post('/messages', async(req, res) => {
     const messageContent = req.body;
-    const targetUser = { name: req.header('user').toString('utf-8') }
+    const originUser = { name: req.header('user').toString('utf-8') }
     const { getUsers } = actions;
-    if(!(await validateUser(targetUser))) {
+    if(!(await validateUser(originUser))) {
         console.log('entered validate...')
         res.status(422).send("Formato de usuário inválido");
         return;
     }
-    if(await getUsers(targetUser) === null) {
+    if(await getUsers(originUser) === null) {
         console.log('entered get...')
         res.status(422).send("Usuário não encontrado");
         return;
     }
     if(await validateMessage(messageContent)) {
         const { insertMessage } = actions;
-        insertMessage(messageContent);
+        insertMessage(messageContent, originUser);
         res.status(201).send();
         return;
     }
