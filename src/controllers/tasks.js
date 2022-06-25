@@ -33,9 +33,9 @@ router.post('/participants', async(req, res) => {
 })
 
 router.post('/messages', async(req, res) => {
+    const { getUsers } = actions;
     const messageContent = req.body;
     const originUser = { name: req.header('user').toString('utf-8') }
-    const { getUsers } = actions;
     if(!(await validateUser(originUser))) {
         console.log('entered validate...')
         res.status(422).send("Formato de usuário inválido");
@@ -74,12 +74,55 @@ router.get('/participants', async(req, res) => {
 });
 
 router.get('/messages', async(req, res) => {
+    const { getMessages } = actions;
     const limit = req.query.limit;
     const user = req.header('user');
-    const { getMessages } = actions;
     const messagesList = await getMessages(user, limit);
     res.status(200).send(messagesList);
 });
 
+router.delete('/messages/:id', async(req,res) => {
+    const { getOriginalMessage, deleteMessage } = actions;
+    const messageId = req.params.id;
+    const originUser = { name: req.header('user').toString('utf-8') };
+    const original = await getOriginalMessage(messageId);
+    if(original === null) {
+        res.status(404).send("Mensagem não encontrada");
+        return;
+    }
+    if(original.from !== originUser.name) {
+        res.status(401).send();
+        return;
+    }
+    deleteMessage(messageId);
+    res.status(200).send();
+    return;
+})
+
+router.put('/messages/:id', async(req, res) => {
+    const { getOriginalMessage } = actions;
+    const messageId = req.params.id;
+    const messageContent = req.body;
+    const originUser = { name: req.header('user').toString('utf-8') };
+    const original = await getOriginalMessage(messageId);
+    if(original === null) {
+        res.status(404).send("Mensagem não encontrada");
+        return;
+    }
+    if(original.from !== originUser.name) {
+        res.status(401).send();
+        return;
+    }
+    if(!(await validateUser(originUser))) {
+        res.status(422).send("Formato de usuário inválido");
+        return;
+    }
+    if(await validateMessage(messageContent)) {
+        const { updateMessage } = actions;
+        updateMessage(messageId, messageContent);
+        res.status(201).send();
+        return;
+    }
+})
 
 export default router;

@@ -1,4 +1,4 @@
-import { MongoClient } from "mongodb";
+import { MongoClient, ObjectId } from "mongodb";
 import scripts from "../controllers/scripts.js";
 import dayjs from "dayjs";
 import 'dotenv/config';
@@ -9,6 +9,48 @@ const MESSAGE_COLLECTION = process.env.MONGO_DATA_COLLECTION;
 const USER_COLLECTION = process.env.MONGO_USERS_COLLECTION;
 
 const client = new MongoClient(`${URL}:${PORT}`);
+
+async function connectToDb() {
+    try {
+        await client.connect();
+        return client.db("UOL_API_DB");
+    }
+    catch (err) {
+        return err;
+    }
+}
+
+async function updateMessage(id, data) {
+    try {
+        const db = await connectToDb();
+        const { addTimeStamp } = scripts;
+        const message = addTimeStamp(data);
+        await db.collection(MESSAGE_COLLECTION).updateOne({ _id: ObjectId(id) },
+                                                          { $set: 
+                                                                {
+                                                                    to: message.to,
+                                                                    text: message.text,
+                                                                    type: message.type,
+                                                                    time: message.time
+                                                                }});
+        return;
+    } catch(err) {
+        return err;
+    }
+}
+
+async function deleteMessage(id) {
+    try {
+        const db = await connectToDb();
+        const response = await db.collection(MESSAGE_COLLECTION).deleteOne({ _id: ObjectId(id) })
+        console.log(response);
+        client.close();
+        return;
+    } catch (err) {
+        client.close();
+        return err;
+    }
+}
 
 async function insertMessage(data, sender) {
     try {
@@ -21,16 +63,6 @@ async function insertMessage(data, sender) {
         await db.collection(MESSAGE_COLLECTION).insertOne(fullMessage);
         client.close();
         return;
-    }
-    catch (err) {
-        return err;
-    }
-}
-
-async function connectToDb() {
-    try {
-        await client.connect();
-        return client.db("UOL_API_DB");
     }
     catch (err) {
         return err;
@@ -51,6 +83,7 @@ async function insertUser(user) {
     }
     catch (err) {
         console.log(err)
+        client.close();
         return err;
     }
 }
@@ -71,6 +104,19 @@ async function insertSystemMessage(data, flag) {
         return;
     }
     catch (err) {
+        client.close();
+        return err;
+    }
+}
+
+async function getOriginalMessage(id) {
+    try {
+        const db = await connectToDb();
+        const message = await db.collection(MESSAGE_COLLECTION).findOne({ _id: ObjectId(id) })
+        client.close();
+        return message;
+    } catch (err) {
+        client.close();
         return err;
     }
 }
@@ -82,7 +128,8 @@ async function getMessages(user, limit = undefined) {
         const messages = await db.collection(MESSAGE_COLLECTION)
                                  .find({ $or: [
                                         { to: user.name },
-                                        { to: "Todos" }
+                                        { to: "Todos" },
+                                        { from: user.name }
                                  ]})
                                  .hint({ $natural: -1 })
                                  .limit(msgLim)
@@ -92,6 +139,7 @@ async function getMessages(user, limit = undefined) {
         return response;
     }
     catch (err) {
+        client.close();
         return err;
     }
 }
@@ -120,6 +168,7 @@ async function updateStatus(user) {
         client.close();
         return;
     } catch(err) {
+        client.close();
         return err;
     }
 }
@@ -137,12 +186,16 @@ async function checkForInactives() {
         return;
     }
     catch (err) {
+        client.close();
         return err;
     }
 }
 
 const actions = {
+    getOriginalMessage,
     checkForInactives,
+    updateMessage,
+    deleteMessage,
     updateStatus,
     insertMessage,
     getMessages,
