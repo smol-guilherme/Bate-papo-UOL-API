@@ -5,17 +5,9 @@ import validateUser from "../models/user.js"
 import 'dotenv/config';
 
 const router = Router();
-const { checkForInactives, updateStatus } = actions;
+const { checkForInactives } = actions;
 const A_SECOND = 1000;
-const pId = setInterval(checkForInactives, 15*A_SECOND); 
-// DEV
-const alwaysOnlineAdemir = setInterval(() => updateStatus({ name: "Ademir" }), 0.33*A_SECOND);
-const alwaysOnlineGovt = setInterval(() => updateStatus({ name: "Govt" }), 0.33*A_SECOND);
-
-router.get('/health', (req, res) => {
-    res.send('OK');
-});
-// DEV
+const pId = setInterval(checkForInactives, 15*A_SECOND);
 
 router.post('/participants', async(req, res) => {
     const { insertUser } = actions;
@@ -24,8 +16,9 @@ router.post('/participants', async(req, res) => {
         res.status(422).send();
         return;
     }
-    if(await insertUser(user)) {
-        res.status(201).send();
+    const userName = await insertUser(user);
+    if(userName !== false) {
+        res.status(201).send(userName);
         return;
     }
     res.status(409).send();
@@ -37,12 +30,10 @@ router.post('/messages', async(req, res) => {
     const messageContent = req.body;
     const originUser = { name: req.header('user').toString('utf-8') }
     if(!(await validateUser(originUser))) {
-        console.log('entered validate...')
         res.status(422).send("Formato de usuário inválido");
         return;
     }
     if(await getUsers(originUser) === null) {
-        console.log('entered get...')
         res.status(422).send("Usuário não encontrado");
         return;
     }
@@ -57,13 +48,12 @@ router.post('/messages', async(req, res) => {
 });
 
 router.post('/status', async(req, res) => {
-    const { getUsers } = actions;
-    const user = { 
-        name: req.header('user')
-    };
-    if(getUsers(user) === null) {
+    const { getUsers, updateStatus } = actions;
+    const user = { name: req.header('user').toString('utf-8') };
+    if(await getUsers(user) === null) {
         return res.status(404).send();
     }
+    await updateStatus(user)
     return res.status(200).send();
 });
 
@@ -76,7 +66,7 @@ router.get('/participants', async(req, res) => {
 router.get('/messages', async(req, res) => {
     const { getMessages } = actions;
     const limit = req.query.limit;
-    const user = req.header('user');
+    const user = { name: req.header('user').toString('utf-8') };
     const messagesList = await getMessages(user, limit);
     res.status(200).send(messagesList);
 });

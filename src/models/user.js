@@ -12,7 +12,6 @@ export default async function validateUser(user) {
         const response = await userSchema.validateAsync(user, { abortEarly: false });
         return true;
     } catch(err) {
-        console.log(`error: ${err}`);
         return false;
     }
 }

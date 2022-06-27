@@ -25,9 +25,10 @@ async function updateMessage(id, data) {
         const db = await connectToDb();
         const { addTimeStamp } = scripts;
         const message = addTimeStamp(data);
-        await db.collection(MESSAGE_COLLECTION).updateOne({ _id: ObjectId(id) },
-                                                          { $set: 
-                                                                {
+        await db.collection(MESSAGE_COLLECTION)
+                .updateOne({ _id: ObjectId(id) },
+                           { $set: 
+                                {
                                                                     to: message.to,
                                                                     text: message.text,
                                                                     type: message.type,
@@ -43,7 +44,6 @@ async function deleteMessage(id) {
     try {
         const db = await connectToDb();
         const response = await db.collection(MESSAGE_COLLECTION).deleteOne({ _id: ObjectId(id) })
-        console.log(response);
         client.close();
         return;
     } catch (err) {
@@ -55,13 +55,13 @@ async function deleteMessage(id) {
 async function insertMessage(data, sender) {
     try {
         const db = await connectToDb();
-        const { addTimeStamp } = scripts;
-        const { sanitizeData } = scripts;
+        const { addTimeStamp, sanitizeData } = scripts;
         const cleanData = sanitizeData(data);
         const cleanSender = sanitizeData(sender)
         const fullMessage = { from: cleanSender.name, ...addTimeStamp(cleanData) };
         await db.collection(MESSAGE_COLLECTION).insertOne(fullMessage);
         client.close();
+        updateStatus(cleanSender)
         return;
     }
     catch (err) {
@@ -74,15 +74,15 @@ async function insertUser(user) {
         if(await getUsers(user) === null) {
             const { sanitizeData } = scripts;
             const db = await connectToDb();
-            const data = { ...sanitizeData(user), lastStatus: Date.now() };
+            const userName = { ...sanitizeData(user) }
+            const data = { name: userName.name, lastStatus: Date.now() };
             await db.collection(USER_COLLECTION).insertOne(data);
             await insertSystemMessage(data, true);
-            return true;
+            return userName;
         }
         return false;
     }
     catch (err) {
-        console.log(err)
         client.close();
         return err;
     }
@@ -123,13 +123,15 @@ async function getOriginalMessage(id) {
 
 async function getMessages(user, limit = undefined) {
     try {
+        const { sanitizeData } = scripts;
+        const cleanUser = sanitizeData(user);
         const msgLim = parseInt(limit);
         const db = await connectToDb();
         const messages = await db.collection(MESSAGE_COLLECTION)
                                  .find({ $or: [
-                                        { to: user.name },
-                                        { to: "Todos" },
-                                        { from: user.name }
+                                        { to: cleanUser.name },
+                                        { from: cleanUser.name },
+                                        { to: "Todos" }
                                  ]})
                                  .hint({ $natural: -1 })
                                  .limit(msgLim)
@@ -152,7 +154,9 @@ async function getUsers(user = undefined) {
             client.close();
             return response;
         }
-        const response = await db.collection(USER_COLLECTION).findOne({ name: user.name });
+        const { sanitizeData } = scripts;
+        const cleanUser = sanitizeData(user);
+        const response = await db.collection(USER_COLLECTION).findOne({ name: cleanUser.name });
         client.close();
         return response;
     }
