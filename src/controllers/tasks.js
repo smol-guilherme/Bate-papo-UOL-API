@@ -12,6 +12,7 @@ const pId = setInterval(checkForInactives, 15*A_SECOND);
 router.post('/participants', async(req, res) => {
     const { insertUser } = actions;
     const user = req.body;
+    user.name = user.name.trim();
     if(!(await validateUser(user))) {
         res.status(422).send();
         return;

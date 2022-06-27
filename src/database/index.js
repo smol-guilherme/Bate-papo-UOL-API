@@ -74,7 +74,7 @@ async function insertUser(user) {
         if(await getUsers(user) === null) {
             const { sanitizeData } = scripts;
             const db = await connectToDb();
-            const userName = { ...sanitizeData(user) }
+            const userName = { ...sanitizeData(user) };
             const data = { name: userName.name, lastStatus: Date.now() };
             await db.collection(USER_COLLECTION).insertOne(data);
             await insertSystemMessage(data, true);
@@ -131,7 +131,8 @@ async function getMessages(user, limit = undefined) {
                                  .find({ $or: [
                                         { to: cleanUser.name },
                                         { from: cleanUser.name },
-                                        { to: "Todos" }
+                                        { to: "Todos" },
+                                        { type: "message" }
                                  ]})
                                  .hint({ $natural: -1 })
                                  .limit(msgLim)
